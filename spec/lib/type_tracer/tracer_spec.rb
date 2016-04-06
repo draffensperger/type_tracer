@@ -11,12 +11,16 @@ module TypeTracer
 
       expect(tracer.types_hash).to eq(
         SingleParamCaller => {
-          call: [{ String => [:is_a?, :downcase] }, { Fixnum => [:is_a?, :+] }]
+          call: {
+            object: { String => [:is_a?, :downcase], Fixnum => [:is_a?, :+] }
+          }
         }
       )
+
       expect(tracer.types_json).to eq(
-        '{"SingleParamCaller":'\
-        '{"call":[{"String":["is_a?","downcase"]},{"Fixnum":["is_a?","+"]}]}}')
+        '{"SingleParamCaller":{"call":'\
+        '{"object":{"String":["is_a?","downcase"],"Fixnum":["is_a?","+"]}}}}'
+      )
     end
   end
 end

@@ -4,37 +4,46 @@ module TypeTracer
   class Tracer
     def initialize(source_location_prefix)
       @source_location_prefix = source_location_prefix
-      @method_call_types = {}
       @ignored_classes = Set.new
-      @contracts = ContractsSet.new
+      @type_info_by_class = {}
     end
 
-    # Allow this method to be big so that the majority of (ignored )traced
-    # method calls will be able to be handled without more method calls.
+    # The block in the method below will be called on every Ruby method call, so
+    # try to minimize how many method call it itself makes.
     # rubocop:disable AbcSize
+    # rubocop:disable MethodLength
     def start_trace
       TracePoint.trace(:call) do |tp|
-        next if tp.defined_class == self.class ||
-                @ignored_classes.include?(tp.defined_class)
-
-        method = tp.defined_class.instance_method(tp.method_id)
-        unless method.source_location.first.start_with?(@source_location_prefix)
-          @ignored_classes << tp.defined_class
+        klass = tp.defined_class
+        next if klass == self.class || @ignored_classes.include?(klass)
+        method = klass.instance_method(tp.method_id)
+        unless method.source_location[0].start_with?(@source_location_prefix)
+          @ignored_classes << klass
           next
         end
 
-        trace_method_call(tp)
+        @type_info_by_class[klass] ||= {}
+        class_type_info = @type_info_by_class[klass]
+
+        class_type_info[tp.method_id] ||= {}
+        method_type_info = class_type_info[tp.method_id]
+
+        tp.binding.local_variables.each do |arg|
+          method_type_info[arg] ||= {}
+          arg_type_info = method_type_info[arg]
+
+          value = tp.binding.local_variable_get(arg)
+          value_klass = value.class
+
+          arg_type_info[value_klass] ||= []
+          watcher = TypeWatcher.new(value, arg_type_info[value_klass])
+          tp.binding.local_variable_set(arg, watcher)
+        end
       end
     end
 
     def types_hash
-      result = {}
-
-      @contracts.contracts.each do |type_context, type|
-        result[type_context.klass] ||= {}
-        result[type_context.klass][type_context.method] = format_type(type)
-      end
-      result
+      @type_info_by_class
     end
 
     def types_json
@@ -46,15 +55,6 @@ module TypeTracer
     def format_type(type)
       type.klasses.map do |klass|
         { klass => type.klass_calls[klass].to_a }
-      end
-    end
-
-    def trace_method_call(tp)
-      tp.binding.local_variables.each do |var|
-        value = tp.binding.local_variable_get(var)
-        context = TypeContext.new(tp.defined_class, tp.method_id, var)
-        watcher = TypeWatcher.new(value, @contracts, context)
-        tp.binding.local_variable_set(var, watcher)
       end
     end
   end

@@ -1,19 +1,11 @@
 class TypeWatcher < BasicObject
-  def initialize(delegate, contracts_set, context)
-    @contracts = contracts_set
+  def initialize(delegate, calls_list)
     @delegate = delegate
-    @context = context
-    type.record_object(delegate)
+    @calls_list = calls_list
   end
 
   def method_missing(symbol, *args, &_block)
-    type.record_call(@delegate, symbol)
+    @calls_list << symbol unless @calls_list.include?(symbol)
     @delegate.send(symbol, *args)
-  end
-
-  private
-
-  def type
-    @contracts.type_for(@context)
   end
 end
