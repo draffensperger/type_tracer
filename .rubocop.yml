@@ -1,4 +1,5 @@
 Style/Documentation:
   Enabled: false
 
-MaxLineLength: 100
+Metrics/LineLength:
+  Max: 99

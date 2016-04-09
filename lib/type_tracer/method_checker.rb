@@ -10,6 +10,8 @@ class MethodChecker
     @signature = signature
   end
 
+  # rubocop:disable AbcSize
+  # rubocop:disable MethodLength
   def check
     file, _line = @klass.instance_method(@symbol).source_location
     ruby_source = File.read(file)
