@@ -1,10 +1,48 @@
+require 'rspec/mocks/standalone'
 require 'spec_helper'
 
 module TypeTracer
+  class AutoTypeDouble
+    include RSpec::Mocks::ExampleMethods
+
+    def initialize(args)
+      @double_args = args
+      @wrapped_double = double(args)
+    end
+
+    def type=(type)
+      puts "setting type of #{@wrapped_double} to #{type}"
+      @wrapped_double = arg_checking_instance_double(type, @double_args)
+      puts "set type of #{@wrapped_double} to #{type}"
+    end
+
+    def method_missing(symbol, *args, &_block)
+      @wrapped_double.send(symbol, *args)
+    end
+
+    def wrapped_double
+      if @wrapped_double.is_a?(ArgCheckedInstanceDouble)
+        @wrapped_double.instance_double
+      else
+        @wrapped_double
+      end
+    end
+  end
+
+  $traced_types = {
+    PersonalGreeter => {
+      initialize: {
+        name: { String => [] },
+        greeter: { Greeter => [] }
+      }
+    }
+  }
+
   class SpecTracer
     def initialize(source_location_prefix)
       @source_location_prefix = source_location_prefix
       @ignored_classes = Set.new
+      @ignored_classes << AstUtil
       @type_info_by_class = {}
     end
 
@@ -22,9 +60,20 @@ module TypeTracer
         end
 
         tp.binding.local_variables.each do |arg|
-          # value = tp.binding.local_variable_get(arg)
-          # value_klass = value.class
-          # p [tp.defined_class, tp.method_id, arg, value_klass, value]
+          value = tp.binding.local_variable_get(arg)
+          value_klass = value.class
+          p [tp.defined_class, tp.method_id, arg, value_klass, value]
+          next unless value_klass == AutoTypeDouble
+          puts 'auto type double!'
+          puts "traced types: #{$traced_types}"
+          signature_class = $traced_types[tp.defined_class]
+          puts "signature class: #{signature_class}"
+          next unless signature_class
+          signature = signature_class[tp.method_id]
+          puts "signature: #{signature}"
+          next unless signature
+          signature_arg_type = signature[arg].keys.first
+          value.type = signature_arg_type
         end
       end
     end
@@ -45,9 +94,7 @@ module TypeTracer
       end
     end
   end
-end
 
-module TypeTracer
   describe PersonalGreeter, '#greet tested with arg_checking_instance_double' do
     let(:greeter) { arg_checking_instance_double(Greeter, greet: nil) }
     let(:personal_greeter) { PersonalGreeter.new('Dave', greeter) }
@@ -59,7 +106,11 @@ module TypeTracer
   end
 
   describe PersonalGreeter, '#greet tested with traced signature double' do
-    let(:greeter) { double(greet: nil) }
+    def auto_type_double(*args)
+      AutoTypeDouble.new(*args)
+    end
+
+    let(:greeter) { auto_type_double(greet: nil) }
 
     # My next idea is to take the production type tracing code so that it could
     # infer a type for the :greeter double above based on the production type
@@ -69,7 +120,7 @@ module TypeTracer
     it 'greets with a nil (default language)' do
       SpecTracer.new('/Users/dave/wmd/type_tracer/').start_trace
       personal_greeter.greet
-      expect(greeter).to have_received(:greet).with('Dave', nil)
+      expect(greeter.wrapped_double).to have_received(:greet).with('Dave', nil)
     end
   end
 end

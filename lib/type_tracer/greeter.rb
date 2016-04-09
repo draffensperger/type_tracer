@@ -10,7 +10,7 @@ module TypeTracer
     end
 
     def greet(name, language)
-      language ||= 'english'
+      # language ||= 'english'
       @stream.puts("#{HELLOS[language.downcase.to_sym]} #{name}!")
     end
   end
