@@ -76,9 +76,10 @@ module AstUtil
   end
 
   def base_level_sends(method_ast)
-    ast_select(method_ast) do |node|
+    base_level_method_defs = ast_select(method_ast) do |node|
       node.type == :send && node.children.first.nil?
-    end.map { |node| node.children[1].to_sym }
+    end
+    base_level_method_defs.map { |node| node.children[1].to_sym }
   end
 
   def ast_select(ast, &_block)
