@@ -49,6 +49,8 @@ module TypeTracer
     # The block in the method below will be called on every Ruby method call, so
     # try to minimize how many method call it itself makes.
     # rubocop:disable MethodLength
+    # rubocop:disable CyclomaticComplexity
+    # rubocop:disable AbcSize
     def start_trace
       TracePoint.trace(:call) do |tp|
         klass = tp.defined_class

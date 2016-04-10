@@ -3,3 +3,6 @@ Style/Documentation:
 
 Metrics/LineLength:
   Max: 99
+
+GlobalVars:
+  AllowedVariables: ['$traced_types']
