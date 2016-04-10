@@ -62,11 +62,23 @@ module AstUtil
     end
   end
 
+  def method_definitions(ast)
+    ast_select(ast) do |node|
+      node.type == :def
+    end
+  end
+
   def ast_find(ast, &_block)
     traverse_ast(ast) do |node|
       return node if yield(node)
     end
     nil
+  end
+
+  def base_level_sends(method_ast)
+    ast_select(method_ast) do |node|
+      node.type == :send && node.children.first.nil?
+    end.map { |node| node.children[1].to_sym }
   end
 
   def ast_select(ast, &_block)
