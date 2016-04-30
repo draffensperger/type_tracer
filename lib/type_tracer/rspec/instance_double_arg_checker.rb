@@ -1,4 +1,5 @@
 require 'rspec/mocks'
+require_relative '../../type_tracer'
 
 module RSpec
   module Mocks
