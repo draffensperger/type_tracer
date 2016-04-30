@@ -41,26 +41,26 @@ module TypeTracer
     end
   end
 
-  code = <<-EOS
-  def defined_already
-    puts "hi"
-  end
+  # code = <<-EOS
+  # def defined_already
+  #   puts "hi"
+  # end
+  #
+  # class TestIt
+  #   def hi1(x)
+  #     not_defined
+  #   end
+  #
+  #   def hi2
+  #     hi1
+  #     'A'.downcase
+  #   end
+  #
+  #   def h3
+  #     defined_already
+  #   end
+  # end
+  # EOS
 
-  class TestIt
-    def hi1(x)
-      not_defined
-    end
-
-    def hi2
-      hi1
-      'A'.downcase
-    end
-
-    def h3
-      defined_already
-    end
-  end
-  EOS
-
-  UndefinedMethodCheck.check_for_undefined_methods(code)
+  # UndefinedMethodCheck.check_for_undefined_methods(code)
 end

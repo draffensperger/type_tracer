@@ -9,9 +9,9 @@ Gem::Specification.new do |spec|
   spec.authors       = ['draffensperger']
   spec.email         = ['d.raffensperger@gmail.com']
 
-  spec.summary       = 'TODO: Write a short summary, because Rubygems requires one.'
-  spec.description   = 'TODO: Write a longer description or delete this line.'
-  spec.homepage      = "TODO: Put your gem's website or public repo URL here."
+  spec.summary       = 'Proof of concept tool for Ruby static/dynamic analysis'
+  spec.description   = 'Proof of concept tool for Ruby static/dynamic analysis'
+  spec.homepage      = "https://github.com/draffensperger/type_tracer"
   spec.license       = 'MIT'
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or
