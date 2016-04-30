@@ -1,3 +1,5 @@
+require 'rspec/mocks'
+
 module RSpec
   module Mocks
     class VerifyingMethodDouble
@@ -5,7 +7,7 @@ module RSpec
 
       def proxy_method_invoked(obj, *args, &block)
         orig_proxy_method_invoked(obj, *args, &block)
-        return unless obj.is_a?(RSpec::Mocks::InstanceVerifyingDouble)
+        return unless obj.is_a?(InstanceVerifyingDouble)
 
         name = @method_reference.instance_variable_get('@method_name')
         klass = @method_reference.instance_variable_get('@object_reference')
@@ -13,8 +15,7 @@ module RSpec
 
         checker = TypeTracer::ArgSendsChecker.new(klass, name, args)
         messages = checker.invalid_arg_messages
-        return if messages.empty?
-        raise RSpec::Mocks::MockExpectationError.new, messages.join("\n")
+        raise MockExpectationError.new, messages.join("\n") unless messages.empty?
       end
     end
   end
