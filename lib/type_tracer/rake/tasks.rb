@@ -1,3 +1,5 @@
+require 'type_tracer/instance_method_checker'
+
 desc 'Checks for undefined instance methods'
 namespace :type_tracer do
   task check_method_calls: :environment do |_, _args|

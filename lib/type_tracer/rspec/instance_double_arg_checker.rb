@@ -1,5 +1,5 @@
 require 'rspec/mocks'
-require_relative '../../type_tracer'
+require 'type_tracer/arg_sends_checker'
 
 module RSpec
   module Mocks
