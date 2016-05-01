@@ -26,7 +26,9 @@ module TypeTracer
 
     def check_self_send(send_node)
       symbol = send_node.children.second
-      return if symbol == :private
+
+      # private/protected specifiers are parsed as a send, so just ignore them
+      return if symbol == :private || symbol == :protected
 
       klass = const_context(send_node)
       return if klass.instance_methods.include?(symbol) ||
