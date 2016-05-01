@@ -1,5 +1,3 @@
-require 'type_tracer/parser'
-
 # Include files in the type_tracer subdirectory, but not in recursive
 # subdirectories
 Dir[File.join(File.dirname(__FILE__), 'type_tracer', '*.rb')].each do |file|

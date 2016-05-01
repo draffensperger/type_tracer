@@ -1,4 +1,4 @@
-require 'parser/current'
+require 'type_tracer/parser'
 
 module TypeTracer
   class InstanceMethodChecker
