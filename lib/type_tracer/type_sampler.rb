@@ -33,12 +33,30 @@ module TypeTracer
           @type_info_by_class[klass] ||= {}
           class_type_info = @type_info_by_class[klass]
 
-          class_type_info[tp.method_id] ||= {}
+          args = method.parameters
+          arg_names = args.map(&:second)
+          class_type_info[tp.method_id] ||= {
+            args: args,
+            arg_types: {},
+            callers: []
+          }
           method_type_info = class_type_info[tp.method_id]
+          args_type_info = method_type_info[:arg_types]
+          source_location_with_line = method.source_location.join(':')
+          selected_caller = caller.select do |frame|
+            frame.start_with?(@source_location_prefix) &&
+              !frame.start_with?(source_location_with_line)
+          end
+          selected_caller.map! { |frame| frame[@source_location_prefix.length..-1] }
+
+          unless method_type_info[:callers].include?(selected_caller)
+            method_type_info[:callers] << selected_caller
+          end
 
           tp.binding.local_variables.each do |arg|
-            method_type_info[arg] ||= {}
-            arg_type_info = method_type_info[arg]
+            next unless arg_names.include?(arg)
+            args_type_info[arg] ||= {}
+            arg_type_info = args_type_info[arg]
 
             value = tp.binding.local_variable_get(arg)
             value_klass = value.class
