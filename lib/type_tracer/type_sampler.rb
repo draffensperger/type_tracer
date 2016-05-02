@@ -6,9 +6,6 @@ module TypeTracer
     class << self
       # The block in the method below will be called on every Ruby method call, so
       # try to minimize how many method call it itself makes.
-      # rubocop:disable AbcSize
-      # rubocop:disable MethodLength
-      # rubocop:disable CyclomaticComplexity
       def start
         @source_location_prefix ||= TypeTracer.config.type_sampler_root_path.to_s
         @ignored_classes ||= Set.new
@@ -30,46 +27,7 @@ module TypeTracer
             next
           end
 
-          @type_info_by_class[klass] ||= {}
-          class_type_info = @type_info_by_class[klass]
-
-          args = method.parameters
-          arg_names = args.map(&:second)
-          class_type_info[tp.method_id] ||= {
-            args: args,
-            arg_types: {},
-            callers: []
-          }
-          method_type_info = class_type_info[tp.method_id]
-          args_type_info = method_type_info[:arg_types]
-          source_location_with_line = method.source_location.join(':')
-          selected_caller = caller.select do |frame|
-            frame.start_with?(@source_location_prefix) &&
-              !frame.start_with?(source_location_with_line)
-          end
-          selected_caller.map! { |frame| frame[@source_location_prefix.length..-1] }
-
-          unless method_type_info[:callers].include?(selected_caller)
-            method_type_info[:callers] << selected_caller
-          end
-
-          tp.binding.local_variables.each do |arg|
-            next unless arg_names.include?(arg)
-            args_type_info[arg] ||= {}
-            arg_type_info = args_type_info[arg]
-
-            value = tp.binding.local_variable_get(arg)
-            value_klass = value.class
-
-            arg_type_info[value_klass] ||= []
-
-            #  We can only do do a delegate-based type watching on truthy
-            #  values because it's not possible to turn a custom object into a
-            #  falsely value in Ruby
-            next unless value && !value.is_a?(Fixnum)
-            watcher = TypeWatcher.new(value, arg_type_info[value_klass])
-            tp.binding.local_variable_set(arg, watcher)
-          end
+          add_sampled_type_info(tp, method, caller)
         end
 
         @trace.enable
@@ -80,20 +38,57 @@ module TypeTracer
         @trace.disable
       end
 
-      def types_hash
+      def sampled_type_info
         @type_info_by_class
-      end
-
-      def types_json
-        types_hash.to_json
       end
 
       private
 
-      def format_type(type)
-        type.klasses.map do |klass|
-          { klass => type.klass_calls[klass].to_a }
+      def add_sampled_type_info(tp, method, method_caller)
+        klass = tp.defined_class
+        @type_info_by_class[klass] ||= {}
+        class_type_info = @type_info_by_class[klass]
+
+        args = method.parameters
+        arg_names = args.map(&:second)
+        class_type_info[tp.method_id] ||= {
+          args: args,
+          arg_types: {},
+          callers: []
+        }
+        method_type_info = class_type_info[tp.method_id]
+        args_type_info = method_type_info[:arg_types]
+
+        call_stack = project_call_stack(method_caller)
+
+        unless method_type_info[:callers].include?(call_stack)
+          method_type_info[:callers] << call_stack
         end
+
+        tp.binding.local_variables.each do |arg|
+          next unless arg_names.include?(arg)
+          args_type_info[arg] ||= {}
+          arg_type_info = args_type_info[arg]
+
+          value = tp.binding.local_variable_get(arg)
+          value_klass = value.class
+
+          arg_type_info[value_klass] ||= []
+
+          #  We can only do do a delegate-based type watching on truthy
+          #  values because it's not possible to turn a custom object into a
+          #  falsely value in Ruby
+          next unless value && !value.is_a?(Fixnum)
+          watcher = TypeWatcher.new(value, arg_type_info[value_klass])
+          tp.binding.local_variable_set(arg, watcher)
+        end
+      end
+
+      def project_call_stack(method_caller)
+        selected_caller = method_caller[1..-1].select do |frame|
+          frame.start_with?(@source_location_prefix)
+        end
+        selected_caller.map! { |frame| frame[@source_location_prefix.length..-1] }
       end
     end
   end
