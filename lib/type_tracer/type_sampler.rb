@@ -4,32 +4,11 @@ require 'type_tracer/type_watcher'
 module TypeTracer
   class TypeSampler
     class << self
-      # The block in the method_info below will be called on every Ruby method_info call, so
-      # try to minimize how many method_info call it itself makes.
       def start
-        @source_location_prefix ||= TypeTracer.config.type_sampler_root_path.to_s
+        @project_root ||= TypeTracer.config.type_sampler_root_path.to_s
         @ignored_classes ||= Set.new
         @type_info_by_class ||= {}
-
-        @trace = TracePoint.new(:call) do |tp|
-          klass = tp.defined_class
-          next if klass == self.class || @ignored_classes.include?(klass)
-          begin
-            method_info = klass.instance_method(tp.method_id)
-          rescue
-            # If the class doesn't support querying an instance method_info based
-            # on a symbol, just skip it.
-            next
-          end
-
-          unless method_info.source_location[0].start_with?(@source_location_prefix)
-            @ignored_classes << klass
-            next
-          end
-
-          add_sampled_type_info(tp, method_info, caller)
-        end
-
+        @trace ||= TracePoint.new(:call, &method(:trace_method_call))
         @trace.enable
       end
 
@@ -44,54 +23,86 @@ module TypeTracer
 
       private
 
-      def add_sampled_type_info(tp, method_info, method_caller)
+      def trace_method_call(tp)
+        klass = tp.defined_class
+
+        # Skip if the method call is in this class or an ignored class
+        return if klass == self.class || @ignored_classes.include?(klass)
+
+        unbound_method = unbound_method_or_nil(tp)
+        return unless unbound_method
+
+        if in_project?(unbound_method.source_location[0])
+          add_sampled_type_info(tp, unbound_method)
+        else
+          # Ignore classes that have a method not under the project root
+          @ignored_classes << klass
+        end
+      end
+
+      def unbound_method_or_nil(tp)
+        tp.defined_class.instance_method(tp.method_id)
+      rescue
+        # Return nil if the defined class fails to provide `instance_method`
+        nil
+      end
+
+      def in_project?(path)
+        path.start_with?(@project_root)
+      end
+
+      def add_sampled_type_info(tp, unbound_method)
+        method_info = find_method_info(tp, unbound_method)
+
+        add_project_call_stack(method_info[:callers])
+        add_args_type_info(tp, method_info[:arg_types], method_info[:arg_names])
+      end
+
+      def find_method_info(tp, unbound_method)
         klass = tp.defined_class
         @type_info_by_class[klass] ||= {}
         class_type_info = @type_info_by_class[klass]
+        class_type_info[tp.method_id] ||= default_method_info(unbound_method)
+      end
 
-        args = method_info.parameters
-        arg_names = args.map(&:second)
-        class_type_info[tp.method_id] ||= {
+      def default_method_info(unbound_method)
+        args = unbound_method.parameters
+        {
           args: args,
+          arg_names: args.map(&:second),
           arg_types: {},
           callers: []
         }
-        method_type_info = class_type_info[tp.method_id]
-
-        call_stack = project_call_stack(method_caller)
-
-        unless method_type_info[:callers].include?(call_stack)
-          method_type_info[:callers] << call_stack
-        end
-
-        add_arg_type_info(tp, method_type_info[:arg_types], arg_names)
       end
 
-      def add_arg_type_info(tp, args_type_info, arg_names)
-        tp.binding.local_variables.each do |arg|
-          next unless arg_names.include?(arg)
+      def add_project_call_stack(call_stacks)
+        # Exclude non-project frames, and then also exclude the first project
+        # frame as that frame is for the method call we are type sampling.
+        stack = caller.select(&method(:in_project?))[1..-1]
+        call_stacks << stack unless call_stacks.include?(stack)
+      end
+
+      def add_args_type_info(tp, args_type_info, arg_names)
+        arg_vars = tp.binding.local_variables.select { |v| arg_names.include?(v) }
+
+        arg_vars.each do |arg|
           args_type_info[arg] ||= {}
-          arg_type_info = args_type_info[arg]
-
-          value = tp.binding.local_variable_get(arg)
-          value_klass = value.class
-
-          arg_type_info[value_klass] ||= []
-
-          #  We can only do do a delegate-based type watching on truthy
-          #  values because it's not possible to turn a custom object into a
-          #  falsely value in Ruby
-          next unless value && !value.is_a?(Fixnum)
-          watcher = TypeWatcher.new(value, arg_type_info[value_klass])
-          tp.binding.local_variable_set(arg, watcher)
+          add_arg_type_info(tp, args_type_info[arg], arg)
         end
       end
 
-      def project_call_stack(method_caller)
-        selected_caller = method_caller[1..-1].select do |frame|
-          frame.start_with?(@source_location_prefix)
-        end
-        selected_caller.map! { |frame| frame[@source_location_prefix.length..-1] }
+      def add_arg_type_info(tp, arg_type_info, arg)
+        value = tp.binding.local_variable_get(arg)
+        value_klass = value.class
+
+        arg_type_info[value_klass] ||= []
+
+        # We can only do do a delegate-based type watching on truthy
+        # values because it's not possible to turn a custom object into a
+        # falsely value in Ruby
+        return unless value && !value.is_a?(Fixnum)
+        watcher = TypeWatcher.new(value, arg_type_info[value_klass])
+        tp.binding.local_variable_set(arg, watcher)
       end
     end
   end
