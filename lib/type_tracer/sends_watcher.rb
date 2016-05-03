@@ -1,4 +1,4 @@
-class TypeWatcher < BasicObject
+class SendsWatcher < BasicObject
   def initialize(target, calls_list)
     @target = target
     @calls_list = calls_list

@@ -102,7 +102,7 @@ module TypeTracer
         # values because it's not possible to turn a custom object into a
         # falsely value in Ruby
         return unless value && !value.is_a?(Fixnum)
-        watcher = TypeWatcher.new(value, arg_type_info[value_klass])
+        watcher = SendsWatcher.new(value, arg_type_info[value_klass])
         tp.binding.local_variable_set(arg, watcher)
       end
     end
