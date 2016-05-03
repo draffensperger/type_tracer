@@ -59,7 +59,9 @@ module TypeTracer
         method_info = find_method_info(tp, unbound_method)
 
         add_project_call_stack(method_info[:callers])
-        add_args_type_info(tp, method_info[:arg_types], method_info[:arg_names])
+
+        arg_names = method_info[:args].map(&:second)
+        add_args_type_info(tp, method_info[:arg_types], arg_names)
       end
 
       def find_method_info(tp, unbound_method)
@@ -70,13 +72,7 @@ module TypeTracer
       end
 
       def default_method_info(unbound_method)
-        args = unbound_method.parameters
-        {
-          args: args,
-          arg_names: args.map(&:second),
-          arg_types: {},
-          callers: []
-        }
+        { args: unbound_method.parameters, arg_types: {}, callers: [] }
       end
 
       def add_project_call_stack(call_stacks)
