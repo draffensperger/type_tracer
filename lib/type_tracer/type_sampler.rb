@@ -19,7 +19,10 @@ module TypeTracer
       end
 
       def sampled_type_info
-        @type_info_by_class
+        {
+          git_commit: TypeTracer.config.git_commit,
+          type_info: @type_info_by_class
+        }
       end
 
       private
