@@ -6,6 +6,6 @@ class TypeWatcher < BasicObject
 
   def method_missing(m, *args, &block)
     @calls_list << m unless @calls_list.include?(m)
-    @target.__send__(m, *args, &block)
+    @target.send(m, *args, &block)
   end
 end
