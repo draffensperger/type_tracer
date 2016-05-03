@@ -79,13 +79,18 @@ module TypeTracer
         # Exclude non-project frames, and then also exclude the first project
         # frame as that frame is for the method call we are type sampling.
         stack = caller.select(&method(:in_project?))[1..-1]
+                .map(&method(:project_path))
         call_stacks << stack unless call_stacks.include?(stack)
       end
 
-      def add_args_type_info(tp, args_type_info, arg_names)
-        arg_vars = tp.binding.local_variables.select { |v| arg_names.include?(v) }
+      def project_path(full_path)
+        full_path[@project_root.size..-1]
+      end
 
-        arg_vars.each do |arg|
+      def add_args_type_info(tp, args_type_info, arg_names)
+        arg_local_vars = arg_names & tp.binding.local_variables
+
+        arg_local_vars.each do |arg|
           args_type_info[arg] ||= {}
           add_arg_type_info(tp, args_type_info[arg], arg)
         end
