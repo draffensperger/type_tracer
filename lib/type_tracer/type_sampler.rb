@@ -5,7 +5,8 @@ module TypeTracer
   class TypeSampler
     class << self
       def start
-        @project_root ||= TypeTracer.config.type_sampler_root_path.to_s
+        @project_root ||= TypeTracer.config.type_sampler_root_path.to_s + '/'
+        @sample_path_regex ||= TypeTracer.config.type_sampler_path_regex
         @ignored_classes ||= Set.new
         @type_info_by_class ||= {}
         @trace ||= TracePoint.new(:call, &method(:trace_method_call))
@@ -32,12 +33,19 @@ module TypeTracer
         unbound_method = unbound_method_or_nil(tp)
         return unless unbound_method
 
-        if unbound_method.source_location[0].start_with?(@project_root)
+        if sample_types_for_method?(unbound_method)
           add_sampled_type_info(tp, unbound_method)
         else
-          # Ignore classes that have a method not under the project root
           @ignored_classes << klass
         end
+      end
+
+      def sample_types_for_method?(unbound_method)
+        method_file = unbound_method.source_location[0]
+        return false unless method_file.start_with?(@project_root)
+        project_path = method_file[@project_root.size..-1]
+        puts project_path
+        project_path =~ @sample_path_regex
       end
 
       def unbound_method_or_nil(tp)
@@ -45,10 +53,6 @@ module TypeTracer
       rescue
         # Return nil if the defined class fails to provide `instance_method`
         nil
-      end
-
-      def in_project?(path)
-        path.start_with?(@project_root)
       end
 
       def add_sampled_type_info(tp, unbound_method)

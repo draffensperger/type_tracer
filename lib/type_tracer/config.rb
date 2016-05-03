@@ -5,7 +5,7 @@ module TypeTracer
     include Singleton
 
     attr_accessor :attribute_methods_definer, :type_sampler_root_path,
-                  :git_commit
+                  :type_sampler_path_regex, :git_commit
 
     # Set this by giving a block to sample_types_for_requests
     attr_reader :rack_type_sample_decider
