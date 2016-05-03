@@ -33,19 +33,16 @@ module TypeTracer
         unbound_method = unbound_method_or_nil(tp)
         return unless unbound_method
 
-        if sample_types_for_method?(unbound_method)
+        if in_sample_path?(unbound_method.source_location[0])
           add_sampled_type_info(tp, unbound_method)
         else
           @ignored_classes << klass
         end
       end
 
-      def sample_types_for_method?(unbound_method)
-        method_file = unbound_method.source_location[0]
-        return false unless method_file.start_with?(@project_root)
-        project_path = method_file[@project_root.size..-1]
-        puts project_path
-        project_path =~ @sample_path_regex
+      def in_sample_path?(path)
+        return false unless path.start_with?(@project_root)
+        path[@project_root.size..-1] =~ @sample_path_regex
       end
 
       def unbound_method_or_nil(tp)
@@ -82,7 +79,7 @@ module TypeTracer
       def add_project_call_stack(call_stacks)
         # Exclude non-project frames, and then also exclude the first project
         # frame as that frame is for the method call we are type sampling.
-        stack = caller.select { |f| f.start_with?(@project_root) }[1..-1]
+        stack = caller.select(&method(:in_sample_path?))[1..-1]
                 .map { |f| f[@project_root.size..-1] }
         call_stacks << stack unless call_stacks.include?(stack)
       end
@@ -105,9 +102,9 @@ module TypeTracer
         # We can only do do a delegate-based type watching on truthy
         # values because it's not possible to turn a custom object into a
         # falsely value in Ruby
-        # return unless value && !value.is_a?(Fixnum)
-        # watcher = TypeWatcher.new(value, arg_type_info[value_klass])
-        # tp.binding.local_variable_set(arg, watcher)
+        return unless value && !value.is_a?(Fixnum)
+        watcher = TypeWatcher.new(value, arg_type_info[value_klass])
+        tp.binding.local_variable_set(arg, watcher)
       end
     end
   end
