@@ -32,7 +32,7 @@ module TypeTracer
         unbound_method = unbound_method_or_nil(tp)
         return unless unbound_method
 
-        if in_project?(unbound_method.source_location[0])
+        if unbound_method.source_location[0].start_with?(@project_root)
           add_sampled_type_info(tp, unbound_method)
         else
           # Ignore classes that have a method not under the project root
@@ -78,13 +78,9 @@ module TypeTracer
       def add_project_call_stack(call_stacks)
         # Exclude non-project frames, and then also exclude the first project
         # frame as that frame is for the method call we are type sampling.
-        stack = caller.select(&method(:in_project?))[1..-1]
-                .map(&method(:project_path))
+        stack = caller.select { |f| f.start_with?(@project_root) }[1..-1]
+                .map { |f| f[@project_root.size..-1] }
         call_stacks << stack unless call_stacks.include?(stack)
-      end
-
-      def project_path(full_path)
-        full_path[@project_root.size..-1]
       end
 
       def add_args_type_info(tp, args_type_info, arg_names)
