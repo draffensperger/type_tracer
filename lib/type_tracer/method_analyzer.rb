@@ -6,15 +6,20 @@ module TypeTracer
     end
 
     def arg_names
-      args.children.map { |arg_node| arg_node.children.first }
+      @arg_names ||= args.children.map { |arg_node| arg_node.children.first }
     end
 
     def arg_sends
+      return @arg_sends if @arg_sends
       # For the simple version, just assume we don't know what will happen if
       # there are branches in the method, so assume that no args definitely get
       # called (as there could be conditioning on arg type).
-      return empty_arg_sends if branches?
-      Hash[arg_names.map { |arg| [arg, sends_for_arg(arg)] }]
+      @arg_sends =
+        if branches?
+          empty_arg_sends
+        else
+          Hash[arg_names.map { |arg| [arg, sends_for_arg(arg)] }]
+        end
     end
 
     private
