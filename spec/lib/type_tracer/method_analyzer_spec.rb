@@ -40,8 +40,7 @@ describe TypeTracer::MethodAnalyzer do
   it 'returns an empty list if there is a branch in the method' do
     ast = TypeTracer.parse(<<-EOS)
     def hello(x)
-      x ||= 2
-      x.odd?
+      x.odd? if x.is_a?(Fixnum)
     end
     EOS
     analyzer = TypeTracer::MethodAnalyzer.new(method_def: ast)
