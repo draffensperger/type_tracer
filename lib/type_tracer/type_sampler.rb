@@ -1,12 +1,13 @@
+# frozen_string_literal: true
 require 'delegate'
-require 'type_tracer/type_watcher'
+require 'type_tracer/sends_watcher'
 
 module TypeTracer
   class TypeSampler
     class << self
       def start
-        @project_root ||= TypeTracer.config.type_sampler_root_path.to_s + '/'
-        @sample_path_regex ||= TypeTracer.config.type_sampler_path_regex
+        @project_root ||= TypeTracer.config.type_check_root_path.to_s + '/'
+        @sample_path_regex ||= TypeTracer.config.type_check_path_regex
         @ignored_classes ||= Set.new
         @type_info_by_class ||= {}
         @trace ||= TracePoint.new(:call, &method(:trace_method_call))

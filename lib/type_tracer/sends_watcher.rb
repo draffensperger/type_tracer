@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class SendsWatcher < BasicObject
   def initialize(target, calls_list)
     @target = target

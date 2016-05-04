@@ -1,8 +1,9 @@
+# frozen_string_literal: true
 require 'parser/current'
 require_relative 'ast_util'
 
 module TypeTracer
-  class ArgSendsChecker
+  class RealArgSendsChecker
     include AstUtil
 
     def initialize(klass, symbol, args)

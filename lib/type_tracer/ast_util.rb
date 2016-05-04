@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 module TypeTracer
   module AstUtil
     def find_arg_sends(method_def)
@@ -43,6 +44,7 @@ module TypeTracer
 
     def local_var_send_nodes(method_def)
       ast_select(method_def) do |node|
+        next unless node && node.children && node.children.first
         node.type == :send && node.children.first.type == :lvar
       end
     end

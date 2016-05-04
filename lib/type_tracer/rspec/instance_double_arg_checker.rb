@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'rspec/mocks'
 require 'type_tracer/arg_sends_checker'
 
@@ -14,7 +15,7 @@ module RSpec
         klass = @method_reference.instance_variable_get('@object_reference')
                                  .instance_variable_get('@object')
 
-        checker = TypeTracer::ArgSendsChecker.new(klass, name, args)
+        checker = TypeTracer::RealArgSendsChecker.new(klass, name, args)
         messages = checker.invalid_arg_messages
         raise MockExpectationError.new, messages.join("\n") unless messages.empty?
       end

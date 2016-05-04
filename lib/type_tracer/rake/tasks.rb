@@ -1,4 +1,6 @@
+# frozen_string_literal: true
 require 'type_tracer/instance_method_checker'
+require 'type_tracer/arg_send_type_check_runner'
 
 desc 'Checks for undefined instance methods'
 namespace :type_tracer do
@@ -18,5 +20,22 @@ namespace :type_tracer do
       found_undefined_method = true if checker.check_instance_methods
     end
     exit(1) if found_undefined_method
+  end
+
+  task check_arg_sends: :environment do |_, _args|
+    root_dir = TypeTracer.config.type_check_root_path.to_s + '/'
+    files = Dir.glob(File.join(root_dir, '**/*.rb'))
+    TypeTracer.config.type_check_path_regex = %r{\A(app|lib)/}
+    type_check_files = files.select do |file|
+      project_path = file[root_dir.size..-1]
+      project_path =~ TypeTracer.config.type_check_path_regex
+    end
+
+    type_check_files.each { |file| load(file) }
+    stream = STDOUT
+
+    if TypeTracer::ArgSendTypeCheckRunner.new(type_check_files, stream).check_args
+      exit(1)
+    end
   end
 end
