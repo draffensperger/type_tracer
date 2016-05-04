@@ -3,6 +3,9 @@ Dir[File.join(File.dirname(__FILE__), 'type_tracer', '*.rb')].each do |file|
   next if file =~ /version/
   require File.join('type_tracer', File.basename(file, '.rb'))
 end
+require 'type_tracer/arg_send_type_check/ast_checker.rb'
+require 'type_tracer/arg_send_type_check/method_checker.rb'
+require 'type_tracer/arg_send_type_check/runner.rb'
 
 module TypeTracer
   class << self

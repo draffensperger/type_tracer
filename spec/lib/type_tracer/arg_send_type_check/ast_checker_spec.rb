@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 require 'spec_helper'
 
-describe TypeTracer::FileArgSendTypeChecker, '#check_arg_sends' do
+describe TypeTracer::ArgSendTypeCheck::AstChecker, '#check_arg_sends' do
   it 'returns an empty list if there are no invalid sends' do
     ast = TypeTracer.parse(<<-EOS)
     def empty_method
@@ -9,7 +9,7 @@ describe TypeTracer::FileArgSendTypeChecker, '#check_arg_sends' do
     EOS
     types = {}
 
-    bad_arg_sends = TypeTracer::FileArgSendTypeChecker
+    bad_arg_sends = TypeTracer::ArgSendTypeCheck::AstChecker
                     .new(ast: ast, types: types).bad_arg_sends
 
     expect(bad_arg_sends).to be_empty
@@ -34,7 +34,7 @@ describe TypeTracer::FileArgSendTypeChecker, '#check_arg_sends' do
       }
     }
 
-    bad_arg_sends = TypeTracer::FileArgSendTypeChecker
+    bad_arg_sends = TypeTracer::ArgSendTypeCheck::AstChecker
                     .new(ast: ast, types: types).bad_arg_sends
 
     msg = 'The method Test#hello as type sampled may receive a value of type '\

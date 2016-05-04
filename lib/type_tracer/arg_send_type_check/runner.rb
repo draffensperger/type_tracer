@@ -1,6 +1,4 @@
 # frozen_string_literal: true
-require 'type_tracer/type_fetcher'
-require 'type_tracer/arg_send_type_checker'
 
 module TypeTracer
   class ArgSendTypeCheckRunner
