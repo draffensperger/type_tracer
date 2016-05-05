@@ -22,6 +22,9 @@ module TypeTracer
         class_sym = method_class_sym(method_def)
         method_sym = method_def.children.first
 
+        return [] unless @types && @types[class_sym] &&
+                         @types[class_sym][method_sym]
+
         arg_types = @types[class_sym][method_sym][:arg_types]
         MethodChecker.new(method_def: method_def, method_sym: method_sym,
                           class_sym: class_sym, arg_types: arg_types)

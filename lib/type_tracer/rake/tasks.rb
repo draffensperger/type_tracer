@@ -1,6 +1,5 @@
 # frozen_string_literal: true
-require 'type_tracer/instance_method_checker'
-require 'type_tracer/arg_send_type_check_runner'
+require 'type_tracer'
 
 desc 'Checks for undefined instance methods'
 namespace :type_tracer do
@@ -32,10 +31,10 @@ namespace :type_tracer do
     end
 
     type_check_files.each { |file| load(file) }
-    stream = STDOUT
 
-    if TypeTracer::ArgSendTypeCheckRunner.new(type_check_files, stream).check_args
-      exit(1)
-    end
+    runner = TypeTracer::ArgSendTypeCheck::Runner.new(type_check_files)
+    bad_arg_sends = runner.bad_arg_sends
+    bad_arg_sends.each { |message| puts message }
+    exit(1) if bad_arg_sends.present?
   end
 end

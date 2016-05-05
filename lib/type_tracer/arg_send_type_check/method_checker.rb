@@ -28,10 +28,13 @@ module TypeTracer
       end
 
       def bad_arg_send_message(arg_name, arg_type, arg_send)
+        source = @method_def.source_range
         "The method #{@class_sym}##{@method_sym} as type sampled may receive a "\
           "value of type #{arg_type} for the argument '#{arg_name}'. "\
           "However, that type (#{arg_type}) does not contain the instance "\
-          "method '#{arg_send}' that the method tries to call on it."
+          "method '#{arg_send}' that the method tries to call on it. \n"\
+          'Method location:'\
+          "\n  #{source.source_buffer.name}:#{source.line}\n"
       end
 
       def instance_method?(klass, symbol)

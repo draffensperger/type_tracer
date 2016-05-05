@@ -40,6 +40,7 @@ describe TypeTracer::ArgSendTypeCheck::AstChecker, '#check_arg_sends' do
     msg = 'The method Test#hello as type sampled may receive a value of type '\
       "Fixnum for the argument 'x'. However, that type (Fixnum) does not contain "\
       "the instance method 'downcase' that the method tries to call on it."
-    expect(bad_arg_sends).to eq([msg])
+    expect(bad_arg_sends.size).to eq 1
+    expect(bad_arg_sends.first).to start_with(msg)
   end
 end
