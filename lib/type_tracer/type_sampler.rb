@@ -1,5 +1,4 @@
 # frozen_string_literal: true
-require 'delegate'
 require 'type_tracer/sends_watcher'
 
 module TypeTracer
@@ -24,6 +23,10 @@ module TypeTracer
           git_commit: TypeTracer.config.git_commit,
           type_info: @type_info_by_class
         }
+      end
+
+      def clear_sampled_type_info
+        @type_info_by_class = {}
       end
 
       private
@@ -61,7 +64,7 @@ module TypeTracer
 
         add_project_call_stack(method_info[:callers])
 
-        arg_names = method_info[:args].map(&:second)
+        arg_names = method_info[:args].map { |a| a[1] }
         add_args_type_info(tp, method_info[:arg_types], arg_names)
       end
 
