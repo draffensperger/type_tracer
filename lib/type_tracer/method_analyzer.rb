@@ -33,6 +33,10 @@ module TypeTracer
     end
 
     def sends_for_arg(arg)
+      # Assume that if there are any assignments to the local variable for the
+      # argument that we can't confidently know the type of the argument anymore
+      # even if we know its type coming in, so don't assume we know what sends
+      # are made on the initial argument value itself.
       if local_var_assigns.include?(arg)
         []
       else

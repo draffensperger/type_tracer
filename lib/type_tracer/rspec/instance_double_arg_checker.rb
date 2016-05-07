@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 require 'rspec/mocks'
-require 'type_tracer/arg_sends_checker'
+require 'type_tracer/real_arg_sends_checker'
 
 module RSpec
   module Mocks

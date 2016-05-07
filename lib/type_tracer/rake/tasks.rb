@@ -8,7 +8,10 @@ namespace :type_tracer do
     ruby_files = Dir.glob(root_dir.join('app/**/*.rb'))
     ruby_files.each { |file| load(file) }
 
+    # Call the configured attribute methods definer to define
+    # methods on classes, e.g. initialize ActiveRecord models
     TypeTracer.config.attribute_methods_definer.try(:call)
+
     stream = STDOUT
 
     found_undefined_method = false

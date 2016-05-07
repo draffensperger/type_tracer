@@ -8,6 +8,7 @@ module TypeTracer
     class << self
       def fetch_sampled_types
         url = TypeTracer.config.sampled_types_url
+        puts "Using sampled types from: #{url}\n\n"
         json = Net::HTTP.get(URI.parse(url))
         save_types_locally(json)
         JSON.parse(json).deep_symbolize_keys
