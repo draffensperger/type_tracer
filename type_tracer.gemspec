@@ -1,4 +1,5 @@
 # coding: utf-8
+# frozen_string_literal: true
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
 require 'type_tracer/version'
@@ -11,7 +12,7 @@ Gem::Specification.new do |spec|
 
   spec.summary       = 'Proof of concept tool for Ruby static/dynamic analysis'
   spec.description   = 'Proof of concept tool for Ruby static/dynamic analysis'
-  spec.homepage      = "https://github.com/draffensperger/type_tracer"
+  spec.homepage      = 'https://github.com/draffensperger/type_tracer'
   spec.license       = 'MIT'
 
   # Prevent pushing this gem to RubyGems.org by setting 'allowed_push_host', or

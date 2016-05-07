@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'rubocop'
 require 'parser/current'
 Parser::Builders::Default.emit_lambda = true

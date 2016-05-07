@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 # rake tasks for Rails 3+
 module TypeTracer
   class Railtie < ::Rails::Railtie

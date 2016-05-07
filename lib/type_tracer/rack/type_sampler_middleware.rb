@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 require 'type_tracer/type_sampler'
 
 module TypeTracer
