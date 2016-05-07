@@ -1,5 +1,7 @@
 # TypeTracer
 
+[![Build Status](https://travis-ci.org/draffensperger/type_tracer.svg?branch=master)](https://travis-ci.org/draffensperger/type_tracer) [![Code Climate](https://codeclimate.com/github/draffensperger/type_tracer.png)](https://codeclimate.com/github/draffensperger/type_tracer)
+
 TypeTracer collects a set of experimental approaches to statically checking Ruby
 "types" (particularly method signatures) while still allowing a decent level of
 metaprogramming and without needing to specify annotations in the production
