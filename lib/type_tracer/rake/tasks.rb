@@ -12,16 +12,16 @@ namespace :type_tracer do
     # methods on classes, e.g. initialize ActiveRecord models
     TypeTracer.config.attribute_methods_definer.try(:call)
 
-    stream = STDOUT
+    exit(1) unless undefined_method_messages(ruby_files).empty?
+  end
 
-    found_undefined_method = false
-
-    ruby_files.each do |file|
-      source = File.read(file)
-      checker = TypeTracer::InstanceMethodChecker.new(source, file, stream)
-      found_undefined_method = true if checker.check_instance_methods
+  def undefined_method_messages(ruby_files)
+    ruby_files.flat_map do |file|
+      ast = TypeTracer.parse_file(file)
+      messages = TypeTracer::InstanceMethodChecker.new(ast).undefined_method_messages
+      messages.each(&method(:puts))
+      messages
     end
-    exit(1) if found_undefined_method
   end
 
   task check_arg_sends: :environment do |_, _args|
