@@ -9,6 +9,7 @@ require 'type_tracer/arg_send_type_check/method_checker'
 require 'type_tracer/arg_send_type_check/runner'
 require 'type_tracer/instance_method_checker'
 require 'type_tracer/config'
+require 'type_tracer/method_analyzer'
 
 module TypeTracer
   class << self

@@ -13,11 +13,22 @@ module TypeTracer
 
     private
 
+    # arg_value is the real argument value that we would be calling this method
+    # with (based on the method call on the stub).
+    # index is the argument's position in the call
     def message_if_invalid_arg(arg_value, index)
       arg_sends = method_analyzer.arg_sends.values[index]
       return unless arg_sends
+
+      # arg_sends is the list of definite method calls on that argument that
+      # the static analyzer detected. If there are branches in the method or
+      # assignments to that argument in the method, the analyzer is conservative
+      # and doesn't assume that the sends will necessarily be on this value.
       arg_sends.each do |arg_send|
         next if arg_value.respond_to?(arg_send)
+
+        # Give an invalid arg message if the arg doesn't respond to the call
+        # that the stubbed method would make on it.
         return invalid_arg_message(arg_value, arg_send, index)
       end
       nil

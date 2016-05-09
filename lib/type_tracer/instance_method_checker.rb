@@ -26,17 +26,21 @@ module TypeTracer
       # define_method also doesn't get listed as a method but is one!
       return if [:private, :protected, :define_method].include?(symbol)
 
-      klass = const_context(send_node)
+      # Look up the class for the AST send node in the loaded Ruby
+      # environment. We can do that because this is being run in a Rake
+      # rask with the loaded app environment.
+      klass = loaded_class(send_node)
       return if klass.instance_methods.include?(symbol) ||
                 klass.private_instance_methods.include?(symbol) ||
                 klass.respond_to?(symbol)
 
+      # The abstract syntax tree keeps a reference to the node's file/line
       source = send_node.source_range
       "Likely undefined method: #{symbol} for #{klass} instance"\
         "\n  in #{source.source_buffer.name}:#{source.line}\n\n"
     end
 
-    def const_context(send_node)
+    def loaded_class(send_node)
       context_ancestors = send_node.each_ancestor.select do |ancestor|
         ancestor.class_type? || ancestor.module_type?
       end
