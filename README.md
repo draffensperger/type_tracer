@@ -7,13 +7,14 @@ TypeTracer collects a set of experimental approaches to checking Ruby
 metaprogramming and without needing to specify annotations in the production
 code.
 
-It includes three proof-of-concept approaches to catch some `NoMethodError`
-cases automatically.
+For a detailed discussion of the three approaches below, see my talk
+["Auto-Analyzing Ruby for Fun and Quality"](https://www.youtube.com/watch?v=dWSTDL7t4Rw)
+given at BostonRb in May 2016.
 
 See [tt_demos](https://github.com/draffensperger/tt_demos) for an example of using
 approach 1.,
 and [quote-randomizer](https://github.com/draffensperger/quote-randomizer)
-for a simple Rails app that incorporates support for approaches 2. and 3.
+for a simple Rails app that incorporates support for approaches 2. and 3 below.
 
 ### 1. Enhancing RSpec `instance_double` to check stubbed argument values
 
